@@ -18,40 +18,55 @@ use App\Http\Controllers\VendorDashboardController;
 use App\Http\Controllers\VendorManagementController;
 use Illuminate\Support\Facades\Route;
 
-// Public Landing Page
+// -------------------------------------------------------
+// Page d'accueil publique
+// -------------------------------------------------------
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 
-// Auth Routes
+// -------------------------------------------------------
+// Authentification (invités seulement)
+// -------------------------------------------------------
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+
+    // 🔴 FIX: Rate limiting — max 5 tentatives de login par minute par IP
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+
+    // 🔴 FIX: Inscription publique DÉSACTIVÉE (évite la création de faux admins)
+    // Pour créer un admin, utiliser la route /users (réservée aux admins connectés)
+    // Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    // Route::post('/register', [AuthController::class, 'register']);
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Authenticated Routes
-Route::middleware('auth')->group(function () {
-    // ----------------------------------------------------
-    // Espace Vendeuse (Dashboard Dédié, Ventes & Rapports)
-    // ----------------------------------------------------
+// -------------------------------------------------------
+// Espace Vendeuse/Agent (authentifié, rôle vendor ou agent)
+// -------------------------------------------------------
+Route::middleware(['auth', 'role:vendor,agent'])->group(function () {
     Route::get('/vendor/dashboard', [VendorDashboardController::class, 'index'])->name('vendor.dashboard');
     Route::get('/vendor/sales', [VendorDashboardController::class, 'sales'])->name('vendor.sales');
     Route::get('/vendor/medications', [VendorDashboardController::class, 'medications'])->name('vendor.medications');
     Route::get('/vendor/reports', [VendorDashboardController::class, 'reports'])->name('vendor.reports');
 
-    // ----------------------------------------------------
-    // Admin Supervision (Gestion des Vendeuses)
-    // ----------------------------------------------------
+    // Sorties de stock (vendeuses peuvent enregistrer des ventes)
+    Route::get('/exits', [StockExitController::class, 'index'])->name('exits.index');
+    Route::post('/exits', [StockExitController::class, 'store'])->name('exits.store');
+
+    // 🔴 FIX: Reçu PDF — vérification de propriété dans le contrôleur
+    Route::get('/exits/{id}/pdf', [StockExitController::class, 'downloadReceipt'])->name('exits.pdf');
+});
+
+// -------------------------------------------------------
+// Espace Administrateur (authentifié, rôle admin uniquement)
+// -------------------------------------------------------
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Gestion des vendeuses
     Route::get('/admin/vendors', [VendorManagementController::class, 'index'])->name('admin.vendors.index');
     Route::post('/admin/vendors', [VendorManagementController::class, 'store'])->name('admin.vendors.store');
     Route::post('/admin/vendors/{user}/toggle', [VendorManagementController::class, 'toggleStatus'])->name('admin.vendors.toggle');
-
-    // ----------------------------------------------------
-    // Espace Administrateur Global
-    // ----------------------------------------------------
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Médicaments
     Route::get('/medications', [MedicationController::class, 'index'])->name('medications.index');
@@ -63,11 +78,6 @@ Route::middleware('auth')->group(function () {
     // Entrées de Stock
     Route::get('/entries', [StockEntryController::class, 'index'])->name('entries.index');
     Route::post('/entries', [StockEntryController::class, 'store'])->name('entries.store');
-
-    // Sorties de Stock & Reçus PDF
-    Route::get('/exits', [StockExitController::class, 'index'])->name('exits.index');
-    Route::post('/exits', [StockExitController::class, 'store'])->name('exits.store');
-    Route::get('/exits/{id}/pdf', [StockExitController::class, 'downloadReceipt'])->name('exits.pdf');
 
     // Inventaires & Fiche de comptage PDF
     Route::get('/inventories', [InventoryAuditController::class, 'index'])->name('inventories.index');
@@ -88,7 +98,7 @@ Route::middleware('auth')->group(function () {
     // Alertes
     Route::get('/alerts', [AlertController::class, 'index'])->name('alerts.index');
 
-    // Utilisateurs
+    // Utilisateurs (création d'admins/pharmacists — remplace l'inscription publique)
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
 
@@ -96,3 +106,4 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 });
+

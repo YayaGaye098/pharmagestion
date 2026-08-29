@@ -53,6 +53,13 @@ class StockExitController extends Controller
     public function downloadReceipt($id)
     {
         $movement = StockMovement::with('medication')->findOrFail($id);
+
+        // 🔴 FIX: Un vendeur ne peut télécharger que ses propres reçus
+        // Un admin peut voir tous les reçus
+        if (!auth()->user()->isAdmin() && $movement->user_id !== auth()->id()) {
+            abort(403, 'Vous n\'êtes pas autorisé à accéder à ce reçu.');
+        }
+
         $pdf = Pdf::loadView('pdf.receipt', compact('movement'));
         return $pdf->download("recu_sortie_{$movement->id}.pdf");
     }

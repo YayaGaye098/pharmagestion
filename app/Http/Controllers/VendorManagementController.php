@@ -29,7 +29,7 @@ class VendorManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:50',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
         ]);
 
         User::create([
