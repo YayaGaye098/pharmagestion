@@ -178,8 +178,7 @@
     <!-- Footer Links -->
     <div class="mt-xl text-center border-t border-outline-variant pt-md">
         <p class="font-body-sm text-body-sm text-on-surface-variant">
-            Vous n'avez pas de compte ? 
-            <a class="font-label-md text-label-md text-primary hover:underline focus:outline-none focus:underline ml-xs font-bold" href="{{ route('register') }}">Créer un compte</a>
+            Vous n'avez pas de compte ? Contactez votre administrateur.
         </p>
     </div>
 </main>

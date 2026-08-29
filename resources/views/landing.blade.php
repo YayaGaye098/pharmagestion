@@ -127,7 +127,7 @@
         <a href="{{ route('login') }}" class="hidden md:flex items-center justify-center px-md py-sm font-label-md text-label-md text-primary border border-primary rounded hover:bg-surface-container-low transition-colors">
             Voir la démo
         </a>
-        <a href="{{ route('register') }}" class="flex items-center justify-center px-md py-sm font-label-md text-label-md bg-primary text-on-primary rounded hover:opacity-90 transition-opacity">
+        <a href="{{ route('login') }}" class="flex items-center justify-center px-md py-sm font-label-md text-label-md bg-primary text-on-primary rounded hover:opacity-90 transition-opacity">
             Créer un compte
         </a>
     </div>
@@ -148,7 +148,7 @@
                 PharmaGestion est la solution moderne dédiée aux postes de santé. Gérez votre stock, suivez la traçabilité de vos médicaments et recevez des alertes de péremption en temps réel pour garantir la santé de vos patients.
             </p>
             <div class="flex flex-col sm:flex-row items-center gap-md w-full sm:w-auto mt-sm">
-                <a href="{{ route('register') }}" class="w-full sm:w-auto flex items-center justify-center gap-sm px-lg py-md font-label-md text-label-md bg-primary text-on-primary rounded hover:opacity-90 transition-opacity shadow-sm">
+                <a href="{{ route('login') }}" class="w-full sm:w-auto flex items-center justify-center gap-sm px-lg py-md font-label-md text-label-md bg-primary text-on-primary rounded hover:opacity-90 transition-opacity shadow-sm">
                     Créer un compte gratuitement
                     <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                 </a>
@@ -312,7 +312,7 @@
             Rejoignez les pharmacies qui utilisent PharmaGestion pour optimiser leur quotidien et sécuriser la distribution de médicaments.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-md">
-            <a href="{{ route('register') }}" class="w-full sm:w-auto px-xl py-md font-label-md text-label-md bg-primary text-on-primary rounded hover:opacity-90 transition-opacity shadow-sm font-bold">
+            <a href="{{ route('login') }}" class="w-full sm:w-auto px-xl py-md font-label-md text-label-md bg-primary text-on-primary rounded hover:opacity-90 transition-opacity shadow-sm font-bold">
                 Créer un compte maintenant
             </a>
         </div>
@@ -322,7 +322,7 @@
 <!-- Simple Footer -->
 <footer class="bg-surface-container-lowest border-t border-outline-variant py-lg px-md text-center">
     <p class="font-body-sm text-body-sm text-on-surface-variant">
-        © 2024 PharmaGestion. Conçu pour le Sénégal.
+        © 2026 PharmaGestion. Conçu pour le Sénégal.
     </p>
 </footer>
 
