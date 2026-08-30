@@ -135,13 +135,13 @@
             <li>
                 <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('dashboard') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('dashboard') }}">
                     <span class="material-symbols-outlined">dashboard</span>
-                    <span class="font-label-md text-label-md">Dashboard</span>
+                    <span class="font-label-md text-label-md">Dashboard Admin</span>
                 </a>
             </li>
             <li>
                 <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('admin.vendors.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('admin.vendors.index') }}">
                     <span class="material-symbols-outlined">group</span>
-                    <span class="font-label-md text-label-md">Vendeuses</span>
+                    <span class="font-label-md text-label-md">Gestion Vendeuses</span>
                 </a>
             </li>
             <li>

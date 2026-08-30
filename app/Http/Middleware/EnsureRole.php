@@ -17,7 +17,19 @@ class EnsureRole
         $user = $request->user();
 
         if (!$user || !in_array($user->role, $roles)) {
-            abort(403, 'Acces refuse : vous n\'avez pas les permissions necessaires.');
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Accès refusé : permissions insuffisantes.'], 403);
+            }
+
+            if ($user && $user->isVendor()) {
+                return redirect()->route('vendor.dashboard')->with('error', 'Accès refusé : cette section est réservée à l\'administrateur.');
+            }
+
+            if ($user && $user->isAdmin()) {
+                return redirect()->route('dashboard')->with('error', 'Le guichet de vente est réservé aux vendeuses. L\'administrateur assure la supervision.');
+            }
+
+            abort(403, 'Accès refusé : vous n\'avez pas les permissions nécessaires.');
         }
 
         return $next($request);

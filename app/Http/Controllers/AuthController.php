@@ -11,6 +11,14 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->isVendor()) {
+                return redirect()->route('vendor.dashboard');
+            }
+            return redirect()->route('dashboard');
+        }
+
         return view('auth.login');
     }
 
@@ -24,18 +32,20 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->has('remember'))) {
             $user = Auth::user();
 
+            // Vérification du statut du compte
             if (isset($user->status) && $user->status === 'inactive') {
                 Auth::logout();
-                return back()->withErrors(['email' => 'Votre compte vendeuse a été désactivé par l\'administrateur.']);
+                return back()->withErrors(['email' => 'Votre compte a été désactivé par l\'administrateur.']);
             }
 
             $request->session()->regenerate();
 
+            // Redirection dédiée selon le rôle du compte connecté
             if ($user->isVendor()) {
                 return redirect()->route('vendor.dashboard');
             }
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors([
@@ -78,6 +88,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('landing');
+        return redirect()->route('login');
     }
 }
