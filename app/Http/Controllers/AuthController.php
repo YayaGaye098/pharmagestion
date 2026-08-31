@@ -40,12 +40,23 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            // Message de bienvenue personnalisé
+            $hour = now()->format('H');
+            if ($hour < 12) {
+                $greeting = 'Bonjour';
+            } elseif ($hour < 18) {
+                $greeting = 'Bon après-midi';
+            } else {
+                $greeting = 'Bonsoir';
+            }
+            $welcomeMessage = "$greeting, {$user->name} ! Bienvenue sur PharmaGestion 👋";
+
             // Redirection dédiée selon le rôle du compte connecté
             if ($user->isVendor()) {
-                return redirect()->route('vendor.dashboard');
+                return redirect()->route('vendor.dashboard')->with('welcome', $welcomeMessage);
             }
 
-            return redirect()->route('dashboard');
+            return redirect()->route('dashboard')->with('welcome', $welcomeMessage);
         }
 
         return back()->withErrors([

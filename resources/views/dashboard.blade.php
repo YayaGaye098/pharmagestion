@@ -4,8 +4,8 @@
 @section('page-title', 'Vue d\'ensemble')
 
 @section('content')
-<!-- Mobile Title -->
-<div class="md:hidden">
+<!-- Mobile/Tablet Title -->
+<div class="lg:hidden">
     <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Vue d'ensemble</h2>
 </div>
 
