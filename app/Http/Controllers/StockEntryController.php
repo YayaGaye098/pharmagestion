@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Medication;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockEntryController extends Controller
 {
@@ -29,20 +30,24 @@ class StockEntryController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $medication = Medication::findOrFail($validated['medication_id']);
+        DB::transaction(function () use ($validated) {
+            $medication = Medication::lockForUpdate()->findOrFail($validated['medication_id']);
         
         // Increase stock quantity
-        $medication->increment('stock_quantity', $validated['quantity']);
+            $medication->increment('stock_quantity', $validated['quantity']);
+            $medication->refresh();
+            $medication->update(['status' => $medication->computed_status]);
 
         // Log movement
-        StockMovement::create([
+            StockMovement::create([
             'medication_id' => $medication->id,
             'type' => 'entrée',
             'quantity' => $validated['quantity'],
             'user_id' => auth()->id(),
             'performed_by_name' => auth()->user()->name ?? 'Agent',
             'notes' => ($validated['supplier'] ? "Fournisseur: {$validated['supplier']} - " : '') . ($validated['notes'] ?? ''),
-        ]);
+            ]);
+        });
 
         return redirect()->route('entries.index')->with('success', 'Entrée de stock enregistrée et stock mis à jour !');
     }

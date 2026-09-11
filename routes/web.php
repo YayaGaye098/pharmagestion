@@ -61,15 +61,17 @@ Route::middleware(['auth', 'role:vendor,agent'])->group(function () {
 // -------------------------------------------------------
 // Espace Administrateur (authentifié, rôle admin uniquement)
 // -------------------------------------------------------
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:admin,pharmacist'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Gestion des vendeuses
-    Route::get('/admin/vendors', [VendorManagementController::class, 'index'])->name('admin.vendors.index');
-    Route::post('/admin/vendors', [VendorManagementController::class, 'store'])->name('admin.vendors.store');
-    Route::put('/admin/vendors/{user}', [VendorManagementController::class, 'update'])->name('admin.vendors.update');
-    Route::post('/admin/vendors/{user}/toggle', [VendorManagementController::class, 'toggleStatus'])->name('admin.vendors.toggle');
-    Route::delete('/admin/vendors/{user}', [VendorManagementController::class, 'destroy'])->name('admin.vendors.destroy');
+    Route::middleware('role:admin')->group(function () {
+        // Gestion des vendeuses
+        Route::get('/admin/vendors', [VendorManagementController::class, 'index'])->name('admin.vendors.index');
+        Route::post('/admin/vendors', [VendorManagementController::class, 'store'])->name('admin.vendors.store');
+        Route::put('/admin/vendors/{user}', [VendorManagementController::class, 'update'])->name('admin.vendors.update');
+        Route::post('/admin/vendors/{user}/toggle', [VendorManagementController::class, 'toggleStatus'])->name('admin.vendors.toggle');
+        Route::delete('/admin/vendors/{user}', [VendorManagementController::class, 'destroy'])->name('admin.vendors.destroy');
+    });
 
     // Médicaments
     Route::get('/medications', [MedicationController::class, 'index'])->name('medications.index');
@@ -108,11 +110,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Alertes
     Route::get('/alerts', [AlertController::class, 'index'])->name('alerts.index');
 
-    // Utilisateurs
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::middleware('role:admin')->group(function () {
+        // Utilisateurs
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
 
     // Paramètres
-    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+    });
 });

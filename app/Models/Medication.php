@@ -40,12 +40,20 @@ class Medication extends Model
     // Helper status badge calculation
     public function getComputedStatusAttribute()
     {
-        if ($this->stock_quantity <= 0) {
+        return $this->stockStatusFor();
+    }
+
+    public function stockStatusFor(?int $quantity = null): string
+    {
+        $stockQuantity = $quantity ?? (int) $this->stock_quantity;
+
+        if ($stockQuantity <= 0) {
             return 'rupture';
         }
-        if ($this->stock_quantity <= $this->min_threshold) {
+        if ($stockQuantity <= $this->min_threshold) {
             return 'faible';
         }
+
         return 'ok';
     }
 }

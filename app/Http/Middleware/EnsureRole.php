@@ -25,7 +25,7 @@ class EnsureRole
                 return redirect()->route('vendor.dashboard')->with('error', 'Accès refusé : cette section est réservée à l\'administrateur.');
             }
 
-            if ($user && $user->isAdmin()) {
+            if ($user && ($user->isAdmin() || $user->isPharmacist())) {
                 return redirect()->route('dashboard')->with('error', 'Le guichet de vente est réservé aux vendeuses. L\'administrateur assure la supervision.');
             }
 

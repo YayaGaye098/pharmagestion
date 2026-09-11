@@ -1,0 +1,77 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: pharmagestion_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=pharmagestion
+      - DB_USERNAME=pharmagestion_user
+      - DB_PASSWORD=secret_pharma_2026
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - pharma_network
+
+  web:
+    image: nginx:alpine
+    container_name: pharmagestion_web
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - pharma_network
+
+  db:
+    image: mysql:8.0
+    container_name: pharmagestion_db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: pharmagestion
+      MYSQL_USER: pharmagestion_user
+      MYSQL_PASSWORD: secret_pharma_2026
+      MYSQL_ROOT_PASSWORD: root_pharma_secret
+    volumes:
+      - pharma_db_data:/var/lib/mysql
+    networks:
+      - pharma_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pharmagestion_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      - db
+    networks:
+      - pharma_network
+
+volumes:
+  pharma_db_data:
+    driver: local
+
+networks:
+  pharma_network:
+    driver: bridge

@@ -92,8 +92,15 @@ class PosController extends Controller
                 }
 
                 // 2. Calcul du montant versé et rendu de monnaie
-                $paidAmount = !empty($validated['paid_amount']) ? (float) $validated['paid_amount'] : $totalAmount;
-                $changeAmount = ($paidAmount >= $totalAmount) ? ($paidAmount - $totalAmount) : 0;
+                $paidAmount = array_key_exists('paid_amount', $validated) && $validated['paid_amount'] !== null && $validated['paid_amount'] !== ''
+                    ? (float) $validated['paid_amount']
+                    : $totalAmount;
+
+                if ($paidAmount < $totalAmount) {
+                    throw new \Exception("Le montant versé ({$paidAmount} FCFA) est inférieur au total à payer ({$totalAmount} FCFA).");
+                }
+
+                $changeAmount = $paidAmount - $totalAmount;
 
                 // 3. Génération d'une référence unique de vente
                 $reference = 'VNT-' . date('Ymd') . '-' . strtoupper(Str::random(5));
@@ -126,6 +133,8 @@ class PosController extends Controller
 
                     // Décrémentation du stock
                     $med->decrement('stock_quantity', $qty);
+                    $med->refresh();
+                    $med->update(['status' => $med->computed_status]);
 
                     // Traçabilité mouvement de stock
                     StockMovement::create([

@@ -6,6 +6,8 @@ use App\Models\Medication;
 use App\Models\StockMovement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class StockExitController extends Controller
 {
@@ -30,22 +32,28 @@ class StockExitController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $medication = Medication::findOrFail($validated['medication_id']);
+        $movement = DB::transaction(function () use ($validated) {
+            $medication = Medication::lockForUpdate()->findOrFail($validated['medication_id']);
 
-        if ($medication->stock_quantity < $validated['quantity']) {
-            return back()->withErrors(['quantity' => 'La quantité demandée dépasse le stock disponible.']);
-        }
+            if ($medication->stock_quantity < $validated['quantity']) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'La quantité demandée dépasse le stock disponible.',
+                ]);
+            }
 
-        $medication->decrement('stock_quantity', $validated['quantity']);
+            $medication->decrement('stock_quantity', $validated['quantity']);
+            $medication->refresh();
+            $medication->update(['status' => $medication->computed_status]);
 
-        $movement = StockMovement::create([
+            return StockMovement::create([
             'medication_id' => $medication->id,
             'type' => 'sortie',
             'quantity' => $validated['quantity'],
             'user_id' => auth()->id(),
             'performed_by_name' => auth()->user()->name ?? 'Agent',
             'notes' => ($validated['patient_or_service'] ? "Bénéficiaire: {$validated['patient_or_service']} - " : '') . ($validated['notes'] ?? ''),
-        ]);
+            ]);
+        });
 
         return redirect()->route('exits.index')->with('success', 'Sortie enregistrée ! Bon N°' . $movement->id);
     }
