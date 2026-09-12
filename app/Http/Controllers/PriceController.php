@@ -17,10 +17,22 @@ class PriceController extends Controller
     {
         $validated = $request->validate([
             'unit_price' => 'required|numeric|min:0',
+            'purchase_price' => 'nullable|numeric|min:0',
         ]);
 
-        $medication->update(['unit_price' => $validated['unit_price']]);
+        $updateData = [
+            'unit_price' => $validated['unit_price'],
+        ];
 
-        return redirect()->route('prices.index')->with('success', "Prix mis à jour pour {$medication->name}: {$validated['unit_price']} FCFA.");
+        if (array_key_exists('purchase_price', $validated)) {
+            $updateData['purchase_price'] = $validated['purchase_price'];
+        }
+
+        $medication->update($updateData);
+
+        return redirect()->route('prices.index')->with(
+            'success',
+            "Tarifs actualisés pour {$medication->name} : Prix Vente {$medication->unit_price} FCFA (Marge unitaire : +{$medication->unit_margin} FCFA)."
+        );
     }
 }

@@ -109,35 +109,43 @@
         <table class="w-full text-left text-sm border-collapse">
             <thead>
                 <tr class="bg-gray-50/80 text-[11px] font-bold text-gray-500 uppercase border-b border-gray-100">
-                    <th class="py-3.5 px-5">Code</th>
-                    <th class="py-3.5 px-5">Médicament</th>
-                    <th class="py-3.5 px-5">Dosage & Forme</th>
-                    <th class="py-3.5 px-5">Catégorie</th>
-                    <th class="py-3.5 px-5 text-right">Stock Disponible</th>
-                    <th class="py-3.5 px-5 text-right">Prix Unitaire</th>
-                    <th class="py-3.5 px-5 text-center">Date Péremption</th>
-                    <th class="py-3.5 px-5 text-center">Actions</th>
+                    <th class="py-3.5 px-4">Code</th>
+                    <th class="py-3.5 px-4">Médicament</th>
+                    <th class="py-3.5 px-4">Dosage & UC</th>
+                    <th class="py-3.5 px-4">Catégorie</th>
+                    <th class="py-3.5 px-4 text-right">Stock</th>
+                    <th class="py-3.5 px-4 text-right">Prix Achat</th>
+                    <th class="py-3.5 px-4 text-right">Prix Vente</th>
+                    <th class="py-3.5 px-4 text-right">Marge Unitaire</th>
+                    <th class="py-3.5 px-4 text-center">Péremption</th>
+                    <th class="py-3.5 px-4 text-center">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($medications as $med)
                     <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="py-3.5 px-5 font-mono text-xs font-bold text-gray-400">
+                        <td class="py-3.5 px-4 font-mono text-xs font-bold text-gray-400">
                             {{ $med->code }}
                         </td>
-                        <td class="py-3.5 px-5">
+                        <td class="py-3.5 px-4">
                             <div class="font-bold text-gray-900 text-xs">{{ $med->name }}</div>
                             <div class="text-[11px] text-gray-400">Seuil min : {{ $med->min_threshold }} u.</div>
                         </td>
-                        <td class="py-3.5 px-5 text-xs text-gray-600">
-                            {{ $med->dosage }} <span class="text-gray-400">({{ $med->form }})</span>
+                        <td class="py-3.5 px-4 text-xs text-gray-600">
+                            <div>{{ $med->dosage }}</div>
+                            <div class="text-[11px] text-gray-400">
+                                {{ $med->form }}
+                                @if($med->packaging_unit)
+                                    • <span class="font-bold text-gray-600">UC: {{ $med->packaging_unit }}</span>
+                                @endif
+                            </div>
                         </td>
-                        <td class="py-3.5 px-5 text-xs">
+                        <td class="py-3.5 px-4 text-xs">
                             <span class="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full font-medium text-[11px]">
                                 {{ $med->category->name ?? 'Général' }}
                             </span>
                         </td>
-                        <td class="py-3.5 px-5 text-right">
+                        <td class="py-3.5 px-4 text-right">
                             @if($med->stock_quantity <= 0)
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
                                     0 (Rupture)
@@ -152,17 +160,32 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="py-3.5 px-5 text-right font-extrabold text-primary text-sm">
+                        <td class="py-3.5 px-4 text-right font-bold text-blue-900 text-xs whitespace-nowrap">
+                            {{ number_format($med->purchase_price ?? 0, 0, ',', ' ') }} FCFA
+                        </td>
+                        <td class="py-3.5 px-4 text-right font-extrabold text-primary text-xs whitespace-nowrap">
                             {{ number_format($med->unit_price, 0, ',', ' ') }} FCFA
                         </td>
-                        <td class="py-3.5 px-5 text-center text-xs text-gray-500">
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            @php
+                                $unitMargin = $med->unit_margin;
+                                $marginPct = $med->margin_percentage;
+                            @endphp
+                            <span class="font-bold text-xs {{ $unitMargin >= 0 ? 'text-emerald-700' : 'text-red-600' }}">
+                                {{ $unitMargin >= 0 ? '+' : '' }}{{ number_format($unitMargin, 0, ',', ' ') }} F
+                            </span>
+                            <div class="text-[10px] {{ $unitMargin >= 0 ? 'text-emerald-600' : 'text-red-500' }} font-semibold">
+                                ({{ $marginPct }}%)
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4 text-center text-xs text-gray-500 whitespace-nowrap">
                             @if($med->expiration_date)
                                 {{ $med->expiration_date->format('d/m/Y') }}
                             @else
                                 <span class="text-gray-400">-</span>
                             @endif
                         </td>
-                        <td class="py-3.5 px-5 text-center">
+                        <td class="py-3.5 px-4 text-center">
                             <div class="flex items-center justify-center gap-1.5">
                                 <button 
                                     type="button" 
@@ -186,7 +209,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="py-10 text-center text-gray-400">
+                        <td colspan="10" class="py-10 text-center text-gray-400">
                             <span class="material-symbols-outlined text-4xl text-gray-300 mb-2 block">medication</span>
                             Aucun médicament trouvé avec les filtres actuels.
                         </td>
@@ -228,14 +251,18 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dosage <span class="text-error">*</span></label>
                     <input name="dosage" placeholder="ex: 500mg, 1g, 200mg/5ml" required class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-medium" type="text"/>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Forme Galénique <span class="text-error">*</span></label>
-                    <input name="form" placeholder="ex: Comprimés, Sirop, Gélules, Injectable" required class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-medium" type="text"/>
+                    <input name="form" placeholder="ex: Comprimés, Sirop, Gélules" required class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-medium" type="text"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Unité Conditionnement (UC)</label>
+                    <input name="packaging_unit" placeholder="ex: FL/500, B/100, T/30" class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary uppercase font-medium" type="text"/>
                 </div>
             </div>
 
@@ -254,13 +281,17 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Prix Public Unitaire (FCFA) <span class="text-error">*</span></label>
-                    <input name="unit_price" placeholder="500" required min="0" step="10" class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-bold text-primary" type="number"/>
+                    <label class="block text-xs font-bold text-blue-900 uppercase mb-1">Prix d'Achat (FCFA)</label>
+                    <input name="purchase_price" placeholder="ex: 350" min="0" step="1" class="w-full text-xs bg-gray-50 border border-blue-200 rounded-lg p-2.5 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold text-blue-900" type="number"/>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Date de Péremption</label>
+                    <label class="block text-xs font-bold text-emerald-900 uppercase mb-1">Prix Vente Public (FCFA) <span class="text-error">*</span></label>
+                    <input name="unit_price" placeholder="500" required min="0" step="1" class="w-full text-xs bg-gray-50 border border-emerald-200 rounded-lg p-2.5 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold text-emerald-900" type="number"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Date Péremption</label>
                     <input name="expiration_date" class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-medium" type="date"/>
                 </div>
             </div>
@@ -323,7 +354,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dosage <span class="text-error">*</span></label>
                     <input id="editDosage" name="dosage" required class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-medium" type="text"/>
@@ -331,6 +362,10 @@
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Forme Galénique <span class="text-error">*</span></label>
                     <input id="editForm" name="form" required class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-medium" type="text"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Unité Conditionnement (UC)</label>
+                    <input id="editPackagingUnit" name="packaging_unit" placeholder="ex: FL/500, B/100, T/30" class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary uppercase font-medium" type="text"/>
                 </div>
             </div>
 
@@ -349,10 +384,14 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Prix Unitaire (FCFA) <span class="text-error">*</span></label>
-                    <input id="editUnitPrice" name="unit_price" required min="0" step="10" class="w-full text-xs bg-gray-50 border border-outline-variant rounded-lg p-2.5 focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary font-bold text-primary" type="number"/>
+                    <label class="block text-xs font-bold text-blue-900 uppercase mb-1">Prix Achat (FCFA)</label>
+                    <input id="editPurchasePrice" name="purchase_price" min="0" step="1" class="w-full text-xs bg-gray-50 border border-blue-200 rounded-lg p-2.5 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold text-blue-900" type="number"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-900 uppercase mb-1">Prix Vente (FCFA) <span class="text-error">*</span></label>
+                    <input id="editUnitPrice" name="unit_price" required min="0" step="1" class="w-full text-xs bg-gray-50 border border-emerald-200 rounded-lg p-2.5 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold text-emerald-900" type="number"/>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seuil Min <span class="text-error">*</span></label>
@@ -395,7 +434,9 @@
         document.getElementById('editName').value = med.name;
         document.getElementById('editDosage').value = med.dosage;
         document.getElementById('editForm').value = med.form;
+        document.getElementById('editPackagingUnit').value = med.packaging_unit || '';
         document.getElementById('editCategoryId').value = med.category_id;
+        document.getElementById('editPurchasePrice').value = med.purchase_price ? parseFloat(med.purchase_price) : 0;
         document.getElementById('editUnitPrice').value = med.unit_price;
         document.getElementById('editMinThreshold').value = med.min_threshold;
         

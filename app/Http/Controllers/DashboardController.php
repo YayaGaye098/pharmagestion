@@ -17,6 +17,11 @@ class DashboardController extends Controller
         $stockValue = Medication::select(DB::raw('SUM(stock_quantity * unit_price) as total_val'))
             ->value('total_val') ?? 0;
 
+        $stockCost = Medication::select(DB::raw('SUM(stock_quantity * purchase_price) as cost'))
+            ->value('cost') ?? 0;
+
+        $potentialMargin = $stockValue - $stockCost;
+
         $outOfStockCount = Medication::where('stock_quantity', '<=', 0)->count();
         $lowStockCount = Medication::where('stock_quantity', '>', 0)
             ->whereColumn('stock_quantity', '<=', 'min_threshold')
@@ -36,6 +41,8 @@ class DashboardController extends Controller
             'totalMedications',
             'totalStock',
             'stockValue',
+            'stockCost',
+            'potentialMargin',
             'outOfStockCount',
             'lowStockCount',
             'criticalAlerts',

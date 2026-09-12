@@ -81,9 +81,11 @@ class PharmacySeeder extends Seeder
                 'name' => 'Paracétamol',
                 'dosage' => '500mg',
                 'form' => 'Comprimés',
+                'packaging_unit' => 'B/100',
                 'category_id' => $antalgiques->id,
                 'stock_quantity' => 124,
                 'min_threshold' => 20,
+                'purchase_price' => 350,
                 'unit_price' => 500,
                 'expiration_date' => '2026-11-30',
                 'status' => 'ok',
@@ -96,9 +98,11 @@ class PharmacySeeder extends Seeder
                 'name' => 'Amoxicilline',
                 'dosage' => '1g',
                 'form' => 'Gélules',
+                'packaging_unit' => 'B/50',
                 'category_id' => $antibiotiques->id,
                 'stock_quantity' => 45,
                 'min_threshold' => 15,
+                'purchase_price' => 1100,
                 'unit_price' => 1500,
                 'expiration_date' => '2026-03-15',
                 'status' => 'ok',
@@ -111,9 +115,11 @@ class PharmacySeeder extends Seeder
                 'name' => 'Ibuprofène',
                 'dosage' => '200mg/5ml',
                 'form' => 'Sirop',
+                'packaging_unit' => 'FL/100',
                 'category_id' => $ains->id,
                 'stock_quantity' => 5,
                 'min_threshold' => 10,
+                'purchase_price' => 900,
                 'unit_price' => 1200,
                 'expiration_date' => '2026-08-01',
                 'status' => 'faible',
@@ -126,12 +132,151 @@ class PharmacySeeder extends Seeder
                 'name' => 'Vitamine C',
                 'dosage' => '1000mg',
                 'form' => 'Effervescent',
+                'packaging_unit' => 'T/30',
                 'category_id' => $vitamines->id,
                 'stock_quantity' => 88,
                 'min_threshold' => 20,
+                'purchase_price' => 1400,
                 'unit_price' => 2000,
                 'expiration_date' => '2026-12-31',
                 'status' => 'ok',
+            ]
+        );
+
+        // Médicaments du Bon de Commande Officiel District THIES (Poste de Santé Diakhao)
+        $solutes = Category::firstOrCreate(['name' => 'Solutés & Perfusions'], ['description' => 'Solutés et poches de perfusion']);
+        $injectables = Category::firstOrCreate(['name' => 'Injectables'], ['description' => 'Médicaments sous forme injectable']);
+
+        $m5 = Medication::firstOrCreate(
+            ['code' => '400340'],
+            [
+                'name' => 'Sodium Chlorure 0.9% Sol Perf',
+                'dosage' => '0.9%',
+                'form' => 'Flacon',
+                'packaging_unit' => 'FL/500',
+                'category_id' => $solutes->id,
+                'stock_quantity' => 150,
+                'min_threshold' => 25,
+                'purchase_price' => 690,
+                'unit_price' => 850,
+                'expiration_date' => '2027-06-30',
+                'status' => 'ok',
+            ]
+        );
+
+        $m6 = Medication::firstOrCreate(
+            ['code' => '120340'],
+            [
+                'name' => 'Paracétamol Injectable',
+                'dosage' => '1g/100ml',
+                'form' => 'Injectable',
+                'packaging_unit' => 'FL/100',
+                'category_id' => $injectables->id,
+                'stock_quantity' => 100,
+                'min_threshold' => 15,
+                'purchase_price' => 920,
+                'unit_price' => 1200,
+                'expiration_date' => '2027-04-30',
+                'status' => 'ok',
+            ]
+        );
+
+        $m7 = Medication::firstOrCreate(
+            ['code' => '010512'],
+            [
+                'name' => 'Amoxicilline Cp. Sécable',
+                'dosage' => '1g',
+                'form' => 'Comprimés',
+                'packaging_unit' => 'B/100',
+                'category_id' => $antibiotiques->id,
+                'stock_quantity' => 15,
+                'min_threshold' => 5,
+                'purchase_price' => 7590,
+                'unit_price' => 9000,
+                'expiration_date' => '2026-12-31',
+                'status' => 'ok',
+            ]
+        );
+
+        $m8 = Medication::firstOrCreate(
+            ['code' => '010611'],
+            [
+                'name' => 'Amoxicilline + Ac. Clavulanique',
+                'dosage' => '500+62.5mg',
+                'form' => 'Comprimés',
+                'packaging_unit' => 'B/50',
+                'category_id' => $antibiotiques->id,
+                'stock_quantity' => 50,
+                'min_threshold' => 10,
+                'purchase_price' => 3910,
+                'unit_price' => 4800,
+                'expiration_date' => '2027-01-31',
+                'status' => 'ok',
+            ]
+        );
+
+        // Mouvements d'Entrées Récentes (Bordereau District THIES)
+        StockMovement::firstOrCreate(
+            ['reference_no' => 'TH08J2609CC00021', 'medication_id' => $m5->id],
+            [
+                'type' => 'entrée',
+                'quantity' => 150,
+                'movement_date' => '2026-09-08',
+                'supplier' => 'District THIES',
+                'packaging_unit' => 'FL/500',
+                'purchase_price' => 690,
+                'selling_price' => 850,
+                'user_id' => $admin->id,
+                'performed_by_name' => $admin->name,
+                'notes' => 'Livraison District THIES - PS DIAKHAO (Bordereau N° TH08J2609CC00021)',
+            ]
+        );
+
+        StockMovement::firstOrCreate(
+            ['reference_no' => 'TH08J2609CC00021', 'medication_id' => $m6->id],
+            [
+                'type' => 'entrée',
+                'quantity' => 100,
+                'movement_date' => '2026-09-08',
+                'supplier' => 'District THIES',
+                'packaging_unit' => 'FL/100',
+                'purchase_price' => 920,
+                'selling_price' => 1200,
+                'user_id' => $admin->id,
+                'performed_by_name' => $admin->name,
+                'notes' => 'Livraison District THIES - PS DIAKHAO (Bordereau N° TH08J2609CC00021)',
+            ]
+        );
+
+        StockMovement::firstOrCreate(
+            ['reference_no' => 'TH08J2609CC00021', 'medication_id' => $m7->id],
+            [
+                'type' => 'entrée',
+                'quantity' => 15,
+                'movement_date' => '2026-09-08',
+                'supplier' => 'District THIES',
+                'packaging_unit' => 'B/100',
+                'purchase_price' => 7590,
+                'selling_price' => 9000,
+                'user_id' => $admin->id,
+                'performed_by_name' => $admin->name,
+                'notes' => 'Livraison District THIES - PS DIAKHAO (Bordereau N° TH08J2609CC00021)',
+            ]
+        );
+
+        StockMovement::firstOrCreate(
+            ['reference_no' => 'TH08J2609CC00021', 'medication_id' => $m8->id],
+            [
+                'type' => 'entrée',
+                'quantity' => 50,
+                'movement_date' => '2026-09-08',
+                'supplier' => 'District THIES',
+                'packaging_unit' => 'B/50',
+                'purchase_price' => 3910,
+                'selling_price' => 4800,
+                'user_id' => $admin->id,
+                'performed_by_name' => $admin->name,
+                'notes' => 'Livraison District THIES - PS DIAKHAO (Bordereau N° TH08J2609CC00021)',
             ]
         );
 

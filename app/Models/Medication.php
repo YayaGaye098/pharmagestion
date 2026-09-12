@@ -14,10 +14,12 @@ class Medication extends Model
         'name',
         'dosage',
         'form',
+        'packaging_unit',
         'category_id',
         'stock_quantity',
         'min_threshold',
         'unit_price',
+        'purchase_price',
         'expiration_date',
         'status',
     ];
@@ -25,6 +27,7 @@ class Medication extends Model
     protected $casts = [
         'expiration_date' => 'date',
         'unit_price' => 'decimal:2',
+        'purchase_price' => 'decimal:2',
     ];
 
     public function category()
@@ -55,5 +58,20 @@ class Medication extends Model
         }
 
         return 'ok';
+    }
+
+    public function getUnitMarginAttribute(): float
+    {
+        return (float) $this->unit_price - (float) ($this->purchase_price ?? 0);
+    }
+
+    public function getMarginPercentageAttribute(): float
+    {
+        $purchase = (float) ($this->purchase_price ?? 0);
+        if ($purchase <= 0) {
+            return 0.0;
+        }
+
+        return round((((float) $this->unit_price - $purchase) / $purchase) * 100, 1);
     }
 }

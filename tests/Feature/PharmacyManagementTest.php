@@ -249,4 +249,77 @@ class PharmacyManagementTest extends TestCase
         $responsePdf->assertStatus(200);
         $responsePdf->assertHeader('content-type', 'application/pdf');
     }
+
+    public function test_admin_can_record_stock_entry_with_purchase_price_and_calculate_margin(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'dr.diallo@pharmacie.sn')->first();
+        $med = Medication::where('code', 'PAR-001')->first();
+        $initialStock = $med->stock_quantity;
+
+        $response = $this->actingAs($admin)->post('/entries', [
+            'medication_id' => $med->id,
+            'quantity' => 150,
+            'purchase_price' => 690,
+            'selling_price' => 850,
+            'movement_date' => '2026-09-08',
+            'reference_no' => 'TH08J2609CC00021',
+            'supplier' => 'District THIES',
+            'packaging_unit' => 'B/100',
+            'notes' => 'Livraison trimestrielle poste Diakhao',
+        ]);
+
+        $response->assertRedirect('/entries');
+        $response->assertSessionHas('success');
+
+        // Vérification de la mise à jour du médicament
+        $med->refresh();
+        $this->assertEquals($initialStock + 150, $med->stock_quantity);
+        $this->assertEquals(690, $med->purchase_price);
+        $this->assertEquals(850, $med->unit_price);
+        $this->assertEquals('B/100', $med->packaging_unit);
+        $this->assertEquals(160, $med->unit_margin); // 850 - 690 = 160
+
+        // Vérification de l'enregistrement de l'entrée avec marge
+        $this->assertDatabaseHas('stock_movements', [
+            'medication_id' => $med->id,
+            'type' => 'entrée',
+            'quantity' => 150,
+            'purchase_price' => 690,
+            'selling_price' => 850,
+            'reference_no' => 'TH08J2609CC00021',
+            'supplier' => 'District THIES',
+            'packaging_unit' => 'B/100',
+        ]);
+
+        // Vérification de l'affichage de l'historique et des marges
+        $indexResponse = $this->actingAs($admin)->get('/entries');
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee('TH08J2609CC00021');
+        $indexResponse->assertSee('District THIES');
+        $indexResponse->assertSee('Total Investi en Achats');
+        $indexResponse->assertSee('Marge Brute Prévisionnelle');
+    }
+
+    public function test_admin_can_update_price_and_view_margin(): void
+    {
+        $this->seed();
+        $admin = User::where('email', 'dr.diallo@pharmacie.sn')->first();
+        $med = Medication::where('code', 'PAR-001')->first();
+        $med->update(['purchase_price' => 400]);
+
+        $response = $this->actingAs($admin)->post("/prices/{$med->id}", [
+            'unit_price' => 650,
+            'purchase_price' => 400,
+        ]);
+
+        $response->assertRedirect('/prices');
+        $med->refresh();
+        $this->assertEquals(650, $med->unit_price);
+        $this->assertEquals(250, $med->unit_margin); // 650 - 400 = 250
+
+        $indexResponse = $this->actingAs($admin)->get('/prices');
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee('Marge Actuelle');
+    }
 }

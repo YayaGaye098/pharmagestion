@@ -33,7 +33,7 @@
         <div class="font-display-lg text-display-lg text-on-surface font-bold">{{ number_format($totalStock) }}</div>
     </div>
 
-    <!-- Stock Value -->
+    <!-- Stock Value & Margin -->
     <div class="card-level-1 rounded-xl p-md flex flex-col justify-between h-32">
         <div class="flex justify-between items-start">
             <span class="font-body-md text-body-md text-on-surface-variant">Valeur du Stock</span>
@@ -41,8 +41,15 @@
                 <span class="material-symbols-outlined text-[20px]">payments</span>
             </div>
         </div>
-        <div class="font-currency-md text-currency-md text-on-surface font-bold text-2xl">
-            {{ number_format($stockValue, 0, ',', ' ') }} <span class="text-sm font-normal text-outline">FCFA</span>
+        <div>
+            <div class="font-currency-md text-currency-md text-on-surface font-bold text-2xl">
+                {{ number_format($stockValue, 0, ',', ' ') }} <span class="text-sm font-normal text-outline">FCFA</span>
+            </div>
+            @if($potentialMargin > 0)
+                <div class="text-[11px] font-bold text-emerald-700 mt-0.5">
+                    Marge estimée : +{{ number_format($potentialMargin, 0, ',', ' ') }} FCFA
+                </div>
+            @endif
         </div>
     </div>
 
