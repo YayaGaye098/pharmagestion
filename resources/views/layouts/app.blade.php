@@ -1,9 +1,24 @@
 <!DOCTYPE html>
-<html class="light" lang="fr">
+<html lang="fr">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>@yield('title', 'PharmaGestion')</title>
+
+    {{-- Dark mode: apply before page renders to avoid flash --}}
+    <script>
+        (function() {
+            const theme = localStorage.getItem('pharma-theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+            // Sidebar collapsed state for desktop
+            const sidebarCollapsed = localStorage.getItem('pharma-sidebar-collapsed') === 'true';
+            if (sidebarCollapsed) {
+                document.documentElement.classList.add('sidebar-collapsed');
+            }
+        })();
+    </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="{{ asset('js/tailwindcss.js') }}"></script>
@@ -114,7 +129,18 @@
             border: 1px solid #E2E8F0;
             box-shadow: 0px 2px 4px rgba(0,0,0,0.05);
         }
-        /* Sidebar transition */
+        .dark .card-level-1 {
+            background: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* ── Smooth theme transition ── */
+        *, *::before, *::after {
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.15s ease;
+        }
+
+        /* ── Mobile Sidebar transition ── */
         #mobileSidebar {
             transition: transform 0.3s ease-in-out;
         }
@@ -128,7 +154,64 @@
         #sidebarOverlay {
             transition: opacity 0.3s ease-in-out;
         }
-        /* Welcome banner animation */
+
+        /* ── Desktop Sidebar collapse ── */
+        #desktopSidebar {
+            width: 256px;
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+        }
+        #desktopSidebar.collapsed {
+            width: 68px;
+        }
+        #desktopSidebar .sidebar-label {
+            transition: opacity 0.2s ease, max-width 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 200px;
+            opacity: 1;
+        }
+        #desktopSidebar.collapsed .sidebar-label {
+            opacity: 0;
+            max-width: 0;
+        }
+        #desktopSidebar .sidebar-brand-text {
+            transition: opacity 0.2s ease, max-width 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 200px;
+            opacity: 1;
+        }
+        #desktopSidebar.collapsed .sidebar-brand-text {
+            opacity: 0;
+            max-width: 0;
+        }
+        /* main content shifts with sidebar */
+        #mainContent {
+            transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
+            margin-left: 256px;
+        }
+        #mainContent.sidebar-collapsed {
+            margin-left: 68px;
+        }
+
+        /* ── Dark mode toggle button ── */
+        #darkModeToggle {
+            position: relative;
+        }
+        #darkModeToggle .icon-sun,
+        #darkModeToggle .icon-moon {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s ease, transform 0.3s ease;
+        }
+        #darkModeToggle .icon-sun  { opacity: 1; transform: translate(-50%,-50%) rotate(0deg); }
+        #darkModeToggle .icon-moon { opacity: 0; transform: translate(-50%,-50%) rotate(90deg); }
+        .dark #darkModeToggle .icon-sun  { opacity: 0; transform: translate(-50%,-50%) rotate(-90deg); }
+        .dark #darkModeToggle .icon-moon { opacity: 1; transform: translate(-50%,-50%) rotate(0deg); }
+
+        /* ── Welcome banner animation ── */
         @keyframes slideDown {
             from { transform: translateY(-100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -142,6 +225,32 @@
         }
         .welcome-banner.hiding {
             animation: fadeOut 0.5s ease-in forwards;
+        }
+
+        /* ── Tooltip for collapsed sidebar items ── */
+        .sidebar-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            left: 68px;
+            background: #1e293b;
+            color: #f1f5f9;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            z-index: 100;
+            transition: opacity 0.15s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        #desktopSidebar.collapsed li:hover .sidebar-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        #desktopSidebar li {
+            position: relative;
         }
     </style>
 </head>
@@ -258,115 +367,130 @@
     </aside>
 
     <!-- Desktop SideNavBar Admin (hidden on mobile/tablet) -->
-    <aside class="hidden lg:flex flex-col h-screen fixed left-0 top-0 py-md space-y-sm overflow-y-auto w-64 bg-surface shadow-sm z-50 border-r border-outline-variant">
-        <div class="px-lg pb-md mb-md border-b border-outline-variant">
-            <div class="flex items-center space-x-sm">
-                <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm">
+    <aside id="desktopSidebar" class="hidden lg:flex flex-col h-screen fixed left-0 top-0 py-md space-y-sm overflow-y-auto bg-surface shadow-sm z-50 border-r border-outline-variant">
+        <!-- Brand header -->
+        <div class="px-sm pb-md mb-md border-b border-outline-variant flex items-center justify-between">
+            <div class="flex items-center space-x-sm overflow-hidden">
+                <div class="w-10 h-10 shrink-0 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm">
                     <span class="material-symbols-outlined" data-weight="fill">local_pharmacy</span>
                 </div>
-                <div>
-                    <h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">PharmaGestion</h1>
-                    <p class="font-label-md text-label-md text-on-surface-variant">Poste de Santé (Admin)</p>
+                <div class="sidebar-brand-text">
+                    <h1 class="font-headline-sm text-headline-sm font-bold text-on-surface whitespace-nowrap">PharmaGestion</h1>
+                    <p class="font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Poste de Santé (Admin)</p>
                 </div>
             </div>
         </div>
         <ul class="flex-1 px-sm space-y-xs">
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('dashboard') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('dashboard') }}">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span class="font-label-md text-label-md">Dashboard Admin</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('dashboard') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('dashboard') }}">
+                    <span class="material-symbols-outlined shrink-0">dashboard</span>
+                    <span class="sidebar-label font-label-md text-label-md">Dashboard Admin</span>
                 </a>
+                <span class="sidebar-tooltip">Dashboard Admin</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('admin.vendors.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('admin.vendors.index') }}">
-                    <span class="material-symbols-outlined">group</span>
-                    <span class="font-label-md text-label-md">Gestion Vendeuses</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('admin.vendors.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('admin.vendors.index') }}">
+                    <span class="material-symbols-outlined shrink-0">group</span>
+                    <span class="sidebar-label font-label-md text-label-md">Gestion Vendeuses</span>
                 </a>
+                <span class="sidebar-tooltip">Gestion Vendeuses</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('medications.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('medications.index') }}">
-                    <span class="material-symbols-outlined">medical_services</span>
-                    <span class="font-label-md text-label-md">Médicaments</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('medications.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('medications.index') }}">
+                    <span class="material-symbols-outlined shrink-0">medical_services</span>
+                    <span class="sidebar-label font-label-md text-label-md">Médicaments</span>
                 </a>
+                <span class="sidebar-tooltip">Médicaments</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('stock.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('stock.index') }}">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span class="font-label-md text-label-md">Stock</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('stock.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('stock.index') }}">
+                    <span class="material-symbols-outlined shrink-0">inventory_2</span>
+                    <span class="sidebar-label font-label-md text-label-md">Stock</span>
                 </a>
+                <span class="sidebar-tooltip">Stock</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('entries.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('entries.index') }}">
-                    <span class="material-symbols-outlined">login</span>
-                    <span class="font-label-md text-label-md">Entrées</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('entries.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('entries.index') }}">
+                    <span class="material-symbols-outlined shrink-0">login</span>
+                    <span class="sidebar-label font-label-md text-label-md">Entrées</span>
                 </a>
+                <span class="sidebar-tooltip">Entrées</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('exits.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('exits.index') }}">
-                    <span class="material-symbols-outlined">logout</span>
-                    <span class="font-label-md text-label-md">Sorties</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('exits.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('exits.index') }}">
+                    <span class="material-symbols-outlined shrink-0">logout</span>
+                    <span class="sidebar-label font-label-md text-label-md">Sorties</span>
                 </a>
+                <span class="sidebar-tooltip">Sorties</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('inventories.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('inventories.index') }}">
-                    <span class="material-symbols-outlined">assignment</span>
-                    <span class="font-label-md text-label-md">Inventaires</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('inventories.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('inventories.index') }}">
+                    <span class="material-symbols-outlined shrink-0">assignment</span>
+                    <span class="sidebar-label font-label-md text-label-md">Inventaires</span>
                 </a>
+                <span class="sidebar-tooltip">Inventaires</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('traceability.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('traceability.index') }}">
-                    <span class="material-symbols-outlined">history</span>
-                    <span class="font-label-md text-label-md">Traçabilité</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('traceability.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('traceability.index') }}">
+                    <span class="material-symbols-outlined shrink-0">history</span>
+                    <span class="sidebar-label font-label-md text-label-md">Traçabilité</span>
                 </a>
+                <span class="sidebar-tooltip">Traçabilité</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('prices.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('prices.index') }}">
-                    <span class="material-symbols-outlined">payments</span>
-                    <span class="font-label-md text-label-md">Prix</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('prices.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('prices.index') }}">
+                    <span class="material-symbols-outlined shrink-0">payments</span>
+                    <span class="sidebar-label font-label-md text-label-md">Prix</span>
                 </a>
+                <span class="sidebar-tooltip">Prix</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('reports.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('reports.index') }}">
-                    <span class="material-symbols-outlined">assessment</span>
-                    <span class="font-label-md text-label-md">Rapports</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('reports.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('reports.index') }}">
+                    <span class="material-symbols-outlined shrink-0">assessment</span>
+                    <span class="sidebar-label font-label-md text-label-md">Rapports</span>
                 </a>
+                <span class="sidebar-tooltip">Rapports</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('alerts.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('alerts.index') }}">
-                    <span class="material-symbols-outlined">notification_important</span>
-                    <span class="font-label-md text-label-md">Alertes</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('alerts.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('alerts.index') }}">
+                    <span class="material-symbols-outlined shrink-0">notification_important</span>
+                    <span class="sidebar-label font-label-md text-label-md">Alertes</span>
                 </a>
+                <span class="sidebar-tooltip">Alertes</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('users.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('users.index') }}">
-                    <span class="material-symbols-outlined">group</span>
-                    <span class="font-label-md text-label-md">Utilisateurs</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('users.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('users.index') }}">
+                    <span class="material-symbols-outlined shrink-0">manage_accounts</span>
+                    <span class="sidebar-label font-label-md text-label-md">Utilisateurs</span>
                 </a>
+                <span class="sidebar-tooltip">Utilisateurs</span>
             </li>
             <li>
-                <a class="flex items-center space-x-sm px-md py-sm rounded-lg {{ request()->routeIs('settings.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('settings.index') }}">
-                    <span class="material-symbols-outlined">settings</span>
-                    <span class="font-label-md text-label-md">Paramètres</span>
+                <a class="flex items-center space-x-sm px-sm py-sm rounded-lg {{ request()->routeIs('settings.*') ? 'text-primary font-bold border-r-4 border-primary bg-surface-container' : 'text-on-surface-variant hover:bg-surface-container' }} transition-all scale-95 duration-75" href="{{ route('settings.index') }}">
+                    <span class="material-symbols-outlined shrink-0">settings</span>
+                    <span class="sidebar-label font-label-md text-label-md">Paramètres</span>
                 </a>
+                <span class="sidebar-tooltip">Paramètres</span>
             </li>
             <li class="pt-md border-t border-outline-variant">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full flex items-center space-x-sm px-md py-sm rounded-lg text-error hover:bg-error-container/20 transition-all text-left font-label-md text-label-md cursor-pointer">
-                        <span class="material-symbols-outlined">logout</span>
-                        <span>Déconnexion</span>
+                    <button type="submit" class="w-full flex items-center space-x-sm px-sm py-sm rounded-lg text-error hover:bg-error-container/20 transition-all text-left font-label-md text-label-md cursor-pointer">
+                        <span class="material-symbols-outlined shrink-0">logout</span>
+                        <span class="sidebar-label">Déconnexion</span>
                     </button>
                 </form>
+                <span class="sidebar-tooltip">Déconnexion</span>
             </li>
         </ul>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 lg:ml-64 flex flex-col min-h-screen bg-surface-bright">
+    <main id="mainContent" class="flex-1 flex flex-col min-h-screen bg-surface-bright">
         <!-- Mobile/Tablet Header with hamburger -->
-        <div class="flex lg:hidden justify-between items-center px-md py-sm bg-surface-lowest border-b border-outline-variant sticky top-0 z-30">
+        <div class="flex lg:hidden justify-between items-center px-md py-sm bg-surface border-b border-outline-variant sticky top-0 z-30">
             <div class="flex items-center gap-sm">
-                <button onclick="openSidebar()" class="p-sm rounded-lg text-on-surface hover:bg-surface-container transition-colors">
+                <button onclick="openSidebar()" class="p-sm rounded-lg text-on-surface hover:bg-surface-container transition-colors" title="Ouvrir le menu">
                     <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
                 <div class="flex items-center gap-xs">
@@ -377,6 +501,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-sm">
+                <!-- Dark mode toggle (mobile) -->
+                <button id="darkModeToggle" onclick="toggleDarkMode()" class="w-9 h-9 rounded-lg text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center relative" title="Basculer le mode sombre">
+                    <span class="material-symbols-outlined icon-sun text-xl">light_mode</span>
+                    <span class="material-symbols-outlined icon-moon text-xl">dark_mode</span>
+                </button>
                 <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">
                     {{ substr(auth()->user()->name ?? 'P', 0, 1) }}
                 </div>
@@ -384,9 +513,20 @@
         </div>
 
         <!-- Desktop Header area -->
-        <div class="hidden lg:flex justify-between items-center px-lg py-md bg-surface-lowest border-b border-outline-variant sticky top-0 z-30">
-            <h2 class="font-headline-md text-headline-md text-on-surface font-bold">@yield('page-title', 'Vue d\'ensemble')</h2>
-            <div class="flex items-center space-x-md">
+        <div class="hidden lg:flex justify-between items-center px-lg py-md bg-surface border-b border-outline-variant sticky top-0 z-30">
+            <div class="flex items-center gap-md">
+                <!-- Desktop Sidebar toggle (hamburger) -->
+                <button onclick="toggleDesktopSidebar()" class="p-sm rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" title="Réduire / étendre la sidebar" aria-label="Toggle sidebar">
+                    <span class="material-symbols-outlined text-2xl">menu</span>
+                </button>
+                <h2 class="font-headline-md text-headline-md text-on-surface font-bold">@yield('page-title', 'Vue d\'ensemble')</h2>
+            </div>
+            <div class="flex items-center space-x-sm">
+                <!-- Dark mode toggle (desktop) -->
+                <button id="darkModeToggleDesktop" onclick="toggleDarkMode()" class="w-10 h-10 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors flex items-center justify-center relative" title="Basculer le mode sombre / clair">
+                    <span class="material-symbols-outlined icon-sun">light_mode</span>
+                    <span class="material-symbols-outlined icon-moon">dark_mode</span>
+                </button>
                 <div class="flex items-center gap-sm">
                     <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm">
                         {{ substr(auth()->user()->name ?? 'P', 0, 1) }}
@@ -428,7 +568,7 @@
     </main>
 
 <script>
-    // Mobile/Tablet sidebar toggle
+    // ── Mobile/Tablet sidebar toggle ──────────────────────────────────────
     function openSidebar() {
         const sidebar = document.getElementById('mobileSidebar');
         const overlay = document.getElementById('sidebarOverlay');
@@ -449,7 +589,40 @@
         document.body.style.overflow = '';
     }
 
-    // Auto-dismiss welcome banner after 6 seconds
+    // ── Desktop Sidebar collapse toggle ──────────────────────────────────
+    function toggleDesktopSidebar() {
+        const sidebar = document.getElementById('desktopSidebar');
+        const main    = document.getElementById('mainContent');
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        main.classList.toggle('sidebar-collapsed', isCollapsed);
+        localStorage.setItem('pharma-sidebar-collapsed', isCollapsed ? 'true' : 'false');
+    }
+
+    // ── Dark / Light mode toggle ──────────────────────────────────────────
+    function toggleDarkMode() {
+        const html    = document.documentElement;
+        const isDark  = html.classList.toggle('dark');
+        localStorage.setItem('pharma-theme', isDark ? 'dark' : 'light');
+    }
+
+    // ── Restore sidebar collapse state on load ────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        const collapsed = localStorage.getItem('pharma-sidebar-collapsed') === 'true';
+        if (collapsed) {
+            const sidebar = document.getElementById('desktopSidebar');
+            const main    = document.getElementById('mainContent');
+            if (sidebar) sidebar.classList.add('collapsed');
+            if (main)    main.classList.add('sidebar-collapsed');
+        }
+
+        // Auto-dismiss welcome banner after 6 seconds
+        const banner = document.getElementById('welcomeBanner');
+        if (banner) {
+            setTimeout(() => dismissWelcome(), 6000);
+        }
+    });
+
+    // ── Welcome banner dismiss ────────────────────────────────────────────
     function dismissWelcome() {
         const banner = document.getElementById('welcomeBanner');
         if (banner) {
@@ -457,13 +630,6 @@
             setTimeout(() => banner.remove(), 500);
         }
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const banner = document.getElementById('welcomeBanner');
-        if (banner) {
-            setTimeout(() => dismissWelcome(), 6000);
-        }
-    });
 </script>
 </body>
 </html>
